@@ -18,14 +18,14 @@ import Node.Crypto (CRYPTO)
 foreign import data Hash :: Type
 
 data Algorithm
-  = Md5
-  | Sha512
+  = MD5
+  | SHA512
 
 
 
 instance showAlgorithm :: Show Algorithm where
-  show Md5 = "md5"
-  show Sha512 = "sha512"
+  show MD5 = "md5"
+  show SHA512 = "sha512"
 
 
 
