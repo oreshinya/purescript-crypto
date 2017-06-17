@@ -1,7 +1,8 @@
 module Node.Crypto.Hash
   ( Hash
   , Algorithm(..)
-  , hash
+  , hex
+  , base64
   , createHash
   , update
   , digest
@@ -9,7 +10,7 @@ module Node.Crypto.Hash
 
 import Prelude
 import Control.Monad.Eff (Eff)
-import Node.Encoding (Encoding(UTF8))
+import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, BUFFER, fromString, toString)
 import Node.Crypto (CRYPTO)
 
@@ -29,10 +30,30 @@ instance showAlgorithm :: Show Algorithm where
 
 
 
-hash :: forall e. Algorithm -> String -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
-hash alg str = do
+hex :: forall e.
+       Algorithm ->
+       String ->
+       Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hex alg str = hash alg str Hex
+
+
+
+base64 :: forall e.
+          Algorithm ->
+          String ->
+          Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+base64 alg str = hash alg str Base64
+
+
+
+hash :: forall e.
+        Algorithm ->
+        String ->
+        Encoding ->
+        Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hash alg str enc = do
   buf <- fromString str UTF8
-  createHash alg >>= flip update buf >>= digest >>= toString UTF8
+  createHash alg >>= flip update buf >>= digest >>= toString enc
 
 
 
