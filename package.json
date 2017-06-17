@@ -5,6 +5,7 @@
     "clean": "rm -rf output",
     "bower:install": "bower install",
     "pulp:build": "pulp build",
+    "pulp:test": "pulp test",
     "pulp:version": "pulp version",
     "pulp:publish": "pulp publish",
     "pulp:login": "pulp login"
