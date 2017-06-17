@@ -1,0 +1,31 @@
+{
+  "name": "purescript-crypto",
+  "license": "MIT",
+  "homepage": "https://github.com/oreshinya/purescript-crypto",
+  "authors": [
+    "Shinya Takahashi <s.takahashi313@gmail.com>"
+  ],
+  "description": "PureScript wrapper for crypto module of NodeJS",
+  "keywords": [
+    "purescript",
+    "node",
+    "crypto"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/oreshinya/purescript-crypto.git"
+  },
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "output"
+  ],
+  "dependencies": {
+    "purescript-node-buffer": "^3.0.0",
+    "purescript-eff": "^3.1.0"
+  }
+}
