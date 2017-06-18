@@ -10,7 +10,7 @@ module Node.Crypto.Decipher
 import Prelude
 import Control.Monad.Eff (Eff)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, BUFFER, fromString, toString)
+import Node.Buffer (Buffer, BUFFER, fromString, toString, concat)
 import Node.Crypto (CRYPTO)
 import Node.Crypto.Cipher (Algorithm)
 
@@ -47,11 +47,10 @@ decipher :: forall e.
 decipher alg password str enc = do
   buf <- fromString str enc
   dec <- createDecipher alg password
-  rbuf <- update dec buf
-  rbuf' <- final dec
-  r <- toString UTF8 rbuf
-  r' <- toString UTF8 rbuf'
-  pure $ r <> r'
+  rbuf1 <- update dec buf
+  rbuf2 <- final dec
+  rbuf <- concat [ rbuf1, rbuf2 ]
+  toString UTF8 rbuf
 
 
 

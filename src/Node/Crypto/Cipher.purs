@@ -11,7 +11,7 @@ module Node.Crypto.Cipher
 import Prelude
 import Control.Monad.Eff (Eff)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, BUFFER, fromString, toString)
+import Node.Buffer (Buffer, BUFFER, fromString, toString, concat)
 import Node.Crypto (CRYPTO)
 
 
@@ -59,11 +59,10 @@ cipher :: forall e.
 cipher alg password str enc = do
   buf <- fromString str UTF8
   cip <- createCipher alg password
-  rbuf <- update cip buf
-  rbuf' <- final cip
-  r <- toString enc rbuf
-  r' <- toString enc rbuf'
-  pure $ r <> r'
+  rbuf1 <- update cip buf
+  rbuf2 <- final cip
+  rbuf <- concat [ rbuf1, rbuf2 ]
+  toString enc rbuf
 
 
 
