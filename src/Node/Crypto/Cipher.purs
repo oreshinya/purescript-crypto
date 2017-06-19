@@ -1,6 +1,7 @@
 module Node.Crypto.Cipher
   ( Cipher
   , Algorithm(..)
+  , Password
   , hex
   , base64
   , createCipher
@@ -23,6 +24,8 @@ data Algorithm
   | AES192
   | AES256
 
+type Password = String
+
 
 
 instance showAlgorithm :: Show Algorithm where
@@ -34,7 +37,7 @@ instance showAlgorithm :: Show Algorithm where
 
 hex :: forall e.
        Algorithm ->
-       String ->
+       Password ->
        String ->
        Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hex alg password str = cipher alg password str Hex
@@ -43,7 +46,7 @@ hex alg password str = cipher alg password str Hex
 
 base64 :: forall e.
           Algorithm ->
-          String ->
+          Password ->
           String ->
           Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 base64 alg password str = cipher alg password str Base64
@@ -52,7 +55,7 @@ base64 alg password str = cipher alg password str Base64
 
 cipher :: forall e.
           Algorithm ->
-          String ->
+          Password ->
           String ->
           Encoding ->
           Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
@@ -66,7 +69,7 @@ cipher alg password str enc = do
 
 
 
-createCipher :: forall e. Algorithm -> String -> Eff (crypto :: CRYPTO | e) Cipher
+createCipher :: forall e. Algorithm -> Password -> Eff (crypto :: CRYPTO | e) Cipher
 createCipher alg password = _createCipher (show alg) password
 
 

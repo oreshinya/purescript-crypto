@@ -12,7 +12,7 @@ import Control.Monad.Eff (Eff)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, BUFFER, fromString, toString, concat)
 import Node.Crypto (CRYPTO)
-import Node.Crypto.Cipher (Algorithm)
+import Node.Crypto.Cipher (Algorithm, Password)
 
 
 
@@ -22,7 +22,7 @@ foreign import data Decipher :: Type
 
 fromHex :: forall e.
            Algorithm ->
-           String ->
+           Password ->
            String ->
            Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 fromHex alg password str = decipher alg password str Hex
@@ -31,7 +31,7 @@ fromHex alg password str = decipher alg password str Hex
 
 fromBase64 :: forall e.
               Algorithm ->
-              String ->
+              Password ->
               String ->
               Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 fromBase64 alg password str = decipher alg password str Base64
@@ -40,7 +40,7 @@ fromBase64 alg password str = decipher alg password str Base64
 
 decipher :: forall e.
             Algorithm ->
-            String ->
+            Password ->
             String ->
             Encoding ->
             Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
@@ -54,7 +54,7 @@ decipher alg password str enc = do
 
 
 
-createDecipher :: forall e. Algorithm -> String -> Eff (crypto :: CRYPTO | e) Decipher
+createDecipher :: forall e. Algorithm -> Password -> Eff (crypto :: CRYPTO | e) Decipher
 createDecipher alg password = _createDecipher (show alg) password
 
 

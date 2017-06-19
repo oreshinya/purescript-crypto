@@ -1,5 +1,6 @@
 module Node.Crypto.Hmac
   ( Hmac
+  , Secret
   , hex
   , base64
   , createHmac
@@ -18,11 +19,13 @@ import Node.Crypto.Hash (Algorithm)
 
 foreign import data Hmac :: Type
 
+type Secret = String
+
 
 
 hex :: forall e.
        Algorithm ->
-       String ->
+       Secret ->
        String ->
        Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hex alg secret str = hmac alg secret str Hex
@@ -31,7 +34,7 @@ hex alg secret str = hmac alg secret str Hex
 
 base64 :: forall e.
           Algorithm ->
-          String ->
+          Secret ->
           String ->
           Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 base64 alg secret str = hmac alg secret str Base64
@@ -40,7 +43,7 @@ base64 alg secret str = hmac alg secret str Base64
 
 hmac :: forall e.
         Algorithm ->
-        String ->
+        Secret ->
         String ->
         Encoding ->
         Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
@@ -50,7 +53,7 @@ hmac alg secret str enc = do
 
 
 
-createHmac :: forall e. Algorithm -> String -> Eff (crypto :: CRYPTO | e) Hmac
+createHmac :: forall e. Algorithm -> Secret -> Eff (crypto :: CRYPTO | e) Hmac
 createHmac alg secret = _createHmac (show alg) secret
 
 
