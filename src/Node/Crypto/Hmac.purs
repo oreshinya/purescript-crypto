@@ -23,30 +23,33 @@ type Secret = String
 
 
 
-hex :: forall e.
-       Algorithm ->
-       Secret ->
-       String ->
-       Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hex
+  :: forall e
+   . Algorithm
+  -> Secret
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hex alg secret str = hmac alg secret str Hex
 
 
 
-base64 :: forall e.
-          Algorithm ->
-          Secret ->
-          String ->
-          Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+base64
+  :: forall e
+   . Algorithm
+  -> Secret
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 base64 alg secret str = hmac alg secret str Base64
 
 
 
-hmac :: forall e.
-        Algorithm ->
-        Secret ->
-        String ->
-        Encoding ->
-        Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hmac
+  :: forall e
+   . Algorithm
+  -> Secret
+  -> String
+  -> Encoding
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hmac alg secret str enc = do
   buf <- fromString str UTF8
   createHmac alg secret >>= flip update buf >>= digest >>= toString enc

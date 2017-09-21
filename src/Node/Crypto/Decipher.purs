@@ -20,30 +20,33 @@ foreign import data Decipher :: Type
 
 
 
-fromHex :: forall e.
-           Algorithm ->
-           Password ->
-           String ->
-           Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+fromHex
+  :: forall e
+   . Algorithm
+  -> Password
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 fromHex alg password str = decipher alg password str Hex
 
 
 
-fromBase64 :: forall e.
-              Algorithm ->
-              Password ->
-              String ->
-              Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+fromBase64
+  :: forall e
+   . Algorithm
+  -> Password
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 fromBase64 alg password str = decipher alg password str Base64
 
 
 
-decipher :: forall e.
-            Algorithm ->
-            Password ->
-            String ->
-            Encoding ->
-            Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+decipher
+  :: forall e
+   . Algorithm
+  -> Password
+  -> String
+  -> Encoding
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 decipher alg password str enc = do
   buf <- fromString str enc
   dec <- createDecipher alg password
@@ -59,10 +62,11 @@ createDecipher alg password = _createDecipher (show alg) password
 
 
 
-foreign import _createDecipher :: forall e.
-                                  String ->
-                                  String ->
-                                  Eff (crypto :: CRYPTO | e) Decipher
+foreign import _createDecipher
+  :: forall e
+   . String
+  -> String
+  -> Eff (crypto :: CRYPTO | e) Decipher
 
 
 

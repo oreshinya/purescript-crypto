@@ -30,27 +30,30 @@ instance showAlgorithm :: Show Algorithm where
 
 
 
-hex :: forall e.
-       Algorithm ->
-       String ->
-       Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hex
+  :: forall e
+   . Algorithm
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hex alg str = hash alg str Hex
 
 
 
-base64 :: forall e.
-          Algorithm ->
-          String ->
-          Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+base64
+  :: forall e
+   . Algorithm
+  -> String
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 base64 alg str = hash alg str Base64
 
 
 
-hash :: forall e.
-        Algorithm ->
-        String ->
-        Encoding ->
-        Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+hash
+  :: forall e
+   . Algorithm
+  -> String
+  -> Encoding
+  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
 hash alg str enc = do
   buf <- fromString str UTF8
   createHash alg >>= flip update buf >>= digest >>= toString enc
