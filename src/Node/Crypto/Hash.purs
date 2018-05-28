@@ -9,10 +9,9 @@ module Node.Crypto.Hash
   ) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, BUFFER, fromString, toString)
-import Node.Crypto (CRYPTO)
+import Node.Buffer (Buffer, fromString, toString)
 
 
 
@@ -31,46 +30,43 @@ instance showAlgorithm :: Show Algorithm where
 
 
 hex
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 hex alg str = hash alg str Hex
 
 
 
 base64
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 base64 alg str = hash alg str Base64
 
 
 
 hash
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> String
   -> Encoding
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 hash alg str enc = do
   buf <- fromString str UTF8
   createHash alg >>= flip update buf >>= digest >>= toString enc
 
 
 
-createHash :: forall e. Algorithm -> Eff (crypto :: CRYPTO | e) Hash
+createHash :: Algorithm -> Effect Hash
 createHash alg = _createHash $ show alg
 
 
 
-foreign import _createHash :: forall e. String -> Eff (crypto :: CRYPTO | e) Hash
+foreign import _createHash :: String -> Effect Hash
 
 
 
-foreign import update :: forall e. Hash -> Buffer -> Eff (crypto :: CRYPTO | e) Hash
+foreign import update :: Hash -> Buffer -> Effect Hash
 
 
 
-foreign import digest :: forall e. Hash -> Eff (crypto :: CRYPTO | e) Buffer
+foreign import digest :: Hash -> Effect Buffer

@@ -9,10 +9,9 @@ module Node.Crypto.Hmac
   ) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, BUFFER, fromString, toString)
-import Node.Crypto (CRYPTO)
+import Node.Buffer (Buffer, fromString, toString)
 import Node.Crypto.Hash (Algorithm)
 
 
@@ -24,49 +23,46 @@ type Secret = String
 
 
 hex
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Secret
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 hex alg secret str = hmac alg secret str Hex
 
 
 
 base64
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Secret
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 base64 alg secret str = hmac alg secret str Base64
 
 
 
 hmac
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Secret
   -> String
   -> Encoding
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 hmac alg secret str enc = do
   buf <- fromString str UTF8
   createHmac alg secret >>= flip update buf >>= digest >>= toString enc
 
 
 
-createHmac :: forall e. Algorithm -> Secret -> Eff (crypto :: CRYPTO | e) Hmac
+createHmac :: Algorithm -> Secret -> Effect Hmac
 createHmac alg secret = _createHmac (show alg) secret
 
 
 
-foreign import _createHmac :: forall e. String -> String -> Eff (crypto :: CRYPTO | e) Hmac
+foreign import _createHmac :: String -> String -> Effect Hmac
 
 
 
-foreign import update :: forall e. Hmac -> Buffer -> Eff (crypto :: CRYPTO | e) Hmac
+foreign import update :: Hmac -> Buffer -> Effect Hmac
 
 
 
-foreign import digest :: forall e. Hmac -> Eff (crypto :: CRYPTO | e) Buffer
+foreign import digest :: Hmac -> Effect Buffer

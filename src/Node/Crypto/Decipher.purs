@@ -8,10 +8,9 @@ module Node.Crypto.Decipher
   ) where
 
 import Prelude
-import Control.Monad.Eff (Eff)
+import Effect (Effect)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, BUFFER, fromString, toString, concat)
-import Node.Crypto (CRYPTO)
+import Node.Buffer (Buffer, fromString, toString, concat)
 import Node.Crypto.Cipher (Algorithm, Password)
 
 
@@ -21,32 +20,29 @@ foreign import data Decipher :: Type
 
 
 fromHex
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Password
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 fromHex alg password str = decipher alg password str Hex
 
 
 
 fromBase64
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Password
   -> String
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 fromBase64 alg password str = decipher alg password str Base64
 
 
 
 decipher
-  :: forall e
-   . Algorithm
+  :: Algorithm
   -> Password
   -> String
   -> Encoding
-  -> Eff (buffer :: BUFFER, crypto :: CRYPTO | e) String
+  -> Effect String
 decipher alg password str enc = do
   buf <- fromString str enc
   dec <- createDecipher alg password
@@ -57,21 +53,20 @@ decipher alg password str enc = do
 
 
 
-createDecipher :: forall e. Algorithm -> Password -> Eff (crypto :: CRYPTO | e) Decipher
+createDecipher :: Algorithm -> Password -> Effect Decipher
 createDecipher alg password = _createDecipher (show alg) password
 
 
 
 foreign import _createDecipher
-  :: forall e
-   . String
+  :: String
   -> String
-  -> Eff (crypto :: CRYPTO | e) Decipher
+  -> Effect Decipher
 
 
 
-foreign import update :: forall e. Decipher -> Buffer -> Eff (crypto :: CRYPTO | e) Buffer
+foreign import update :: Decipher -> Buffer -> Effect Buffer
 
 
 
-foreign import final :: forall e. Decipher -> Eff (crypto :: CRYPTO | e) Buffer
+foreign import final :: Decipher -> Effect Buffer
