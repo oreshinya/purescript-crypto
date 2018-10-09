@@ -19,12 +19,14 @@ foreign import data Hash :: Type
 
 data Algorithm
   = MD5
+  | SHA256
   | SHA512
 
 
 
 instance showAlgorithm :: Show Algorithm where
   show MD5 = "md5"
+  show SHA256 = "sha256"
   show SHA512 = "sha512"
 
 

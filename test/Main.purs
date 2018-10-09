@@ -3,6 +3,7 @@ module Test.Main where
 import Prelude
 import Effect (Effect)
 import Test.Assert (assert)
+import Node.Crypto as Crypto
 import Node.Crypto.Hash as Hash
 import Node.Crypto.Hmac as Hmac
 import Node.Crypto.Cipher as Cipher
@@ -28,8 +29,7 @@ main = do
   assert $ base64Hmac == "ZMplcmNJK3GJhKsKSloqQyiMNdnhXGeX8ll86OhEDoYsVJXPhS9ARObKqf5YvwlyFT/LgnpVgdBucrQEEm2/BQ=="
   assert $ base64Cipher == "+iextYmjw5V2yc7P5QcWgoFdpUP7znXEgjpr5w8OF3c="
   assert $ fromBase64Decipher == identifier
-
-
+  assert =<< Crypto.timingSafeEqualString "127e6fbfe24a750e72930c" "127e6fbfe24a750e72930c"
 
 
 
