@@ -6,8 +6,16 @@ PureScript wrapper for `crypto` module of NodeJS.
 
 ## Installation
 
+### Bower
+
 ```
-bower install purescript-crypto
+$ bower install purescript-crypto
+```
+
+### Spago
+
+```
+$ spago install crypto
 ```
 
 ## Documentation
