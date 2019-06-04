@@ -14,8 +14,6 @@ import Effect (Effect)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, fromString, toString, concat)
 
-
-
 foreign import data Cipher :: Type
 
 data Algorithm
@@ -25,14 +23,10 @@ data Algorithm
 
 type Password = String
 
-
-
 instance showAlgorithm :: Show Algorithm where
   show AES128 = "aes128"
   show AES192 = "aes192"
   show AES256 = "aes256"
-
-
 
 hex
   :: Algorithm
@@ -41,16 +35,12 @@ hex
   -> Effect String
 hex alg password str = cipher alg password str Hex
 
-
-
 base64
   :: Algorithm
   -> Password
   -> String
   -> Effect String
 base64 alg password str = cipher alg password str Base64
-
-
 
 cipher
   :: Algorithm
@@ -66,22 +56,14 @@ cipher alg password str enc = do
   rbuf <- concat [ rbuf1, rbuf2 ]
   toString enc rbuf
 
-
-
 createCipher :: Algorithm -> Password -> Effect Cipher
 createCipher alg password = _createCipher (show alg) password
-
-
 
 foreign import _createCipher
   :: String
   -> String
   -> Effect Cipher
 
-
-
 foreign import update :: Cipher -> Buffer -> Effect Buffer
-
-
 
 foreign import final :: Cipher -> Effect Buffer

@@ -9,8 +9,6 @@ import Node.Crypto.Hmac as Hmac
 import Node.Crypto.Cipher as Cipher
 import Node.Crypto.Decipher as Decipher
 
-
-
 main :: Effect Unit
 main = do
   hexHash <- Hash.hex Hash.SHA512 password
@@ -31,17 +29,11 @@ main = do
   assert $ fromBase64Decipher == identifier
   assert =<< Crypto.timingSafeEqualString "127e6fbfe24a750e72930c" "127e6fbfe24a750e72930c"
 
-
-
 identifier :: String
 identifier = "sample_identifier"
 
-
-
 password :: String
 password = "sample_password"
-
-
 
 secret :: String
 secret = "sample_secret"
