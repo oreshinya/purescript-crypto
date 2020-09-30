@@ -1,13 +1,14 @@
 module Test.Main where
 
 import Prelude
+
 import Effect (Effect)
-import Test.Assert (assert)
 import Node.Crypto as Crypto
-import Node.Crypto.Hash as Hash
-import Node.Crypto.Hmac as Hmac
 import Node.Crypto.Cipher as Cipher
 import Node.Crypto.Decipher as Decipher
+import Node.Crypto.Hash as Hash
+import Node.Crypto.Hmac as Hmac
+import Test.Assert (assert)
 
 main :: Effect Unit
 main = do
