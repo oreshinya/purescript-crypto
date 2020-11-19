@@ -2,7 +2,9 @@ module Node.Crypto.Hash
   ( Hash
   , Algorithm(..)
   , hex
+  , hexBuffer
   , base64
+  , base64Buffer
   , createHash
   , update
   , digest
@@ -33,11 +35,23 @@ hex
   -> Effect String
 hex alg str = hash alg str Hex
 
+hexBuffer
+  :: Algorithm
+  -> Buffer
+  -> Effect String
+hexBuffer alg buf = hashBuffer alg buf Hex
+
 base64
   :: Algorithm
   -> String
   -> Effect String
 base64 alg str = hash alg str Base64
+
+base64Buffer
+  :: Algorithm
+  -> Buffer
+  -> Effect String
+base64Buffer alg buf = hashBuffer alg buf Base64
 
 hash
   :: Algorithm
@@ -46,6 +60,14 @@ hash
   -> Effect String
 hash alg str enc = do
   buf <- fromString str UTF8
+  createHash alg >>= flip update buf >>= digest >>= toString enc
+
+hashBuffer
+  :: Algorithm
+  -> Buffer
+  -> Encoding
+  -> Effect String
+hashBuffer alg buf enc = do
   createHash alg >>= flip update buf >>= digest >>= toString enc
 
 createHash :: Algorithm -> Effect Hash
