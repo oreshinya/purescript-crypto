@@ -25,9 +25,9 @@
     "output"
   ],
   "dependencies": {
-    "purescript-node-buffer": "^6.0.0"
+    "purescript-node-buffer": "^7.0.0"
   },
   "devDependencies": {
-    "purescript-assert": "^4.0.0"
+    "purescript-assert": "^5.0.0"
   }
 }
