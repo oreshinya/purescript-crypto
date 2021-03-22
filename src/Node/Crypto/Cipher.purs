@@ -1,7 +1,5 @@
 module Node.Crypto.Cipher
   ( Cipher
-  , Algorithm(..)
-  , Password
   , hex
   , base64
   , createCipher
@@ -10,23 +8,14 @@ module Node.Crypto.Cipher
   ) where
 
 import Prelude
+
+import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, fromString, toString, concat)
+import Node.Crypto.Types (Algorithm, AuthTag, InitializationVector(..), Password(..))
+import Node.Encoding (Encoding(UTF8, Hex, Base64))
 
 foreign import data Cipher :: Type
-
-data Algorithm
-  = AES128
-  | AES192
-  | AES256
-
-type Password = String
-
-instance showAlgorithm :: Show Algorithm where
-  show AES128 = "aes128"
-  show AES192 = "aes192"
-  show AES256 = "aes256"
 
 hex
   :: Algorithm
@@ -57,13 +46,22 @@ cipher alg password str enc = do
   toString enc rbuf
 
 createCipher :: Algorithm -> Password -> Effect Cipher
-createCipher alg password = _createCipher (show alg) password
+createCipher alg (Password password) = runFn2 _createCipher (show alg) password
 
 foreign import _createCipher
-  :: String
-  -> String
-  -> Effect Cipher
+  :: Fn2 String String (Effect Cipher)
 
-foreign import update :: Cipher -> Buffer -> Effect Buffer
+createCipherIv :: Algorithm -> Password -> InitializationVector -> Effect Cipher
+createCipherIv alg (Password password) (InitializationVector iv) = runFn3 _createCipherIv (show alg) password iv
+
+foreign import _createCipherIv
+  :: Fn3 String String String (Effect Cipher)
+
+foreign import getAuthTag :: Cipher -> Effect AuthTag
+
+foreign import _update :: Fn2 Cipher Buffer (Effect Buffer)
+
+update :: Cipher -> Buffer -> (Effect Buffer)
+update ciph buffer = runFn2 _update ciph buffer
 
 foreign import final :: Cipher -> Effect Buffer

@@ -8,18 +8,20 @@ import Node.Crypto.Cipher as Cipher
 import Node.Crypto.Decipher as Decipher
 import Node.Crypto.Hash as Hash
 import Node.Crypto.Hmac as Hmac
+import Node.Crypto.Types as Types
 import Test.Assert (assert)
 
 main :: Effect Unit
 main = do
-  hexHash <- Hash.hex Hash.SHA512 password
-  hexHmac <- Hmac.hex Hash.SHA512 secret password
-  hexCipher <- Cipher.hex Cipher.AES256 password identifier
-  fromHexDecipher <- Decipher.fromHex Cipher.AES256 password hexCipher
-  base64Hash <- Hash.base64 Hash.SHA512 password
-  base64Hmac <- Hmac.base64 Hash.SHA512 secret password
-  base64Cipher <- Cipher.base64 Cipher.AES256 password identifier
-  fromBase64Decipher <- Decipher.fromBase64 Cipher.AES256 password base64Cipher
+  hexHash <- Hash.hex Hash.SHA512 "sample_password"
+  hexHmac <- Hmac.hex Hash.SHA512 secret "sample_password"
+  hexCipher <- Cipher.hex Types.AES256 password identifier
+  fromHexDecipher <- Decipher.fromHex Types.AES256 password hexCipher
+  base64Hash <- Hash.base64 Hash.SHA512 "sample_password"
+  base64Hmac <- Hmac.base64 Hash.SHA512 secret "sample_password"
+  base64Cipher <- Cipher.base64 Types.AES256 password identifier
+  fromBase64Decipher <- Decipher.fromBase64 Types.AES256 password base64Cipher
+  base64CipherIv <- Cipher.base64 Types.AES256 password identifier
   assert $ hexHash == "fd369c76561c41e90eaacef9e95dde1b92a402980b75d739da368ad427e2a5a01bc79e5a6fb46df001b8e21c94e702bfb47574271e4098150854e112bb9c9d1d"
   assert $ hexHmac == "64ca657263492b718984ab0a4a5a2a43288c35d9e15c6797f2597ce8e8440e862c5495cf852f4044e6caa9fe58bf0972153fcb827a5581d06e72b404126dbf05"
   assert $ hexCipher == "fa27b1b589a3c39576c9cecfe5071682815da543fbce75c4823a6be70f0e1777"
@@ -33,8 +35,8 @@ main = do
 identifier :: String
 identifier = "sample_identifier"
 
-password :: String
-password = "sample_password"
+password :: Types.Password
+password = Types.Password "sample_password"
 
-secret :: String
-secret = "sample_secret"
+secret :: Hmac.Secret
+secret = Hmac.Secret "sample_secret"

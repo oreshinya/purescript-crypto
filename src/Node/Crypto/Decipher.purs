@@ -3,6 +3,7 @@ module Node.Crypto.Decipher
   , fromHex
   , fromBase64
   , createDecipher
+  , setAuthTag
   , update
   , final
   ) where
@@ -11,7 +12,8 @@ import Prelude
 import Effect (Effect)
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, fromString, toString, concat)
-import Node.Crypto.Cipher (Algorithm, Password)
+import Node.Crypto.Types (Algorithm, InitializationVector(..), Password(..), AuthTag)
+import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
 
 foreign import data Decipher :: Type
 
@@ -43,14 +45,24 @@ decipher alg password str enc = do
   rbuf <- concat [ rbuf1, rbuf2 ]
   toString UTF8 rbuf
 
+foreign import _setAuthTag :: Fn2 Decipher AuthTag (Effect Unit)
+
+setAuthTag :: Decipher -> AuthTag -> Effect Unit
+setAuthTag = runFn2 _setAuthTag
+
 createDecipher :: Algorithm -> Password -> Effect Decipher
-createDecipher alg password = _createDecipher (show alg) password
+createDecipher alg (Password password) = runFn2 _createDecipher (show alg) password
 
-foreign import _createDecipher
-  :: String
-  -> String
-  -> Effect Decipher
+foreign import _createDecipher :: Fn2 String String (Effect Decipher)
 
-foreign import update :: Decipher -> Buffer -> Effect Buffer
+createDecipherIv :: Algorithm -> Password -> InitializationVector -> Effect Decipher
+createDecipherIv alg (Password password) (InitializationVector iv )= runFn3 _createDecipherIv (show alg) password iv
+
+foreign import _createDecipherIv :: Fn3 String String String (Effect Decipher)
+
+foreign import _update :: Fn2 Decipher Buffer (Effect Buffer)
+
+update :: Decipher -> Buffer -> Effect Buffer
+update = runFn2 _update
 
 foreign import final :: Decipher -> Effect Buffer

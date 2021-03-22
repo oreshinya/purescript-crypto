@@ -4,14 +4,16 @@ module Node.Crypto.Hash
   , hex
   , base64
   , createHash
-  , update
+  , _update
   , digest
   ) where
 
 import Prelude
+
+import Data.Function.Uncurried (Fn2, runFn2)
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, fromString, toString)
+import Node.Encoding (Encoding(UTF8, Hex, Base64))
 
 foreign import data Hash :: Type
 
@@ -53,6 +55,9 @@ createHash alg = _createHash $ show alg
 
 foreign import _createHash :: String -> Effect Hash
 
-foreign import update :: Hash -> Buffer -> Effect Hash
+foreign import _update :: Fn2 Hash Buffer (Effect Hash)
+
+update :: Hash -> Buffer -> Effect Hash 
+update = runFn2 _update
 
 foreign import digest :: Hash -> Effect Buffer

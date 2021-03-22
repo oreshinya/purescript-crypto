@@ -2,24 +2,12 @@
 
 var crypto = require('crypto');
 
-exports._createDecipher = function(algorithm) {
-  return function(password) {
-    return function() {
-      return crypto.createDecipher(algorithm, password);
-    }
-  }
-}
+exports._createDecipher = (algorithm, password) => () => crypto.createDecipher(algorithm, password)
 
-exports.update = function(decipher) {
-  return function(buffer) {
-    return function() {
-      return decipher.update(buffer);
-    }
-  }
-}
+exports._createDecipherIv = (algorithm, password, iv) => () => crypto.createDecipheriv(algorithm, password, iv)
 
-exports.final = function(decipher) {
-  return function() {
-    return decipher.final();
-  }
-}
+exports._update = (decipher, buffer) => () => decipher.update(buffer)
+
+exports._setAuthTag = (decipher, tag) => () => decipher.setAuthTag(tag)
+
+exports.final = (decipher) => () => decipher.final()
