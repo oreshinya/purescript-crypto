@@ -8,6 +8,6 @@ exports._createCipherIv = (algorithm, password, iv) => () => crypto.createCipher
 
 exports.getAuthTag = (cipher) => () => cipher.getAuthTag()
 
-exports._update = (cipher,buffer) => () => cipher.update(buffer)
+exports._update = (cipher, buffer) => () => cipher.update(buffer)
 
 exports.final = (cipher) => () => cipher.final()
