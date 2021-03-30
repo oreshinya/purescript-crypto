@@ -1,6 +1,6 @@
 module Node.Crypto.Types
   ( Algorithm(..)
-  , IvAlgorithm(..)
+  , AuthAlgorithm(..)
   , Password(..)
   , Plaintext(..)
   , Ciphertext(..)
@@ -9,15 +9,18 @@ module Node.Crypto.Types
   , InitializationVector(..)
   ) where
 
-import Data.Show (class Show)
-import Data.Newtype (class Newtype)
-import Node.Buffer as Buffer
-import Node.Buffer (Buffer, fromString, toString, concat)
-import Node.Encoding as Encoding
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Prelude (show)
+-- Notes:
+-- iv is optional (null if no iv needed)
+-- setAuthTag is optional: it is needed for authenticated encryption modes (GCM, CCM and OCB are currently supported)
+-- key and iv should be utf-8 encoded or buffers
+-- createCipher authTagLength needed for CCM or OCB, but is not added, yet
 
-data IvAlgorithm
+import Data.Show (class Show, show)
+import Data.Newtype (class Newtype)
+import Node.Buffer (Buffer)
+import Data.Eq (class Eq)
+
+data AuthAlgorithm
   = AES256GCM
 
 data Algorithm
@@ -25,9 +28,58 @@ data Algorithm
   | AES192
   | AES256
   | AES256CBC
-  | WithIv IvAlgorithm
+  | WithAuth AuthAlgorithm
 
-{--
+newtype Password
+  = Password String
+
+instance ntPassword :: Newtype Password String
+
+newtype Key
+  = Key String
+
+instance ntKey :: Newtype Key String
+
+newtype Plaintext
+  = Plaintext String
+
+instance ntPlaintext :: Newtype Plaintext String
+derive newtype instance eqPlaintext :: Eq Plaintext
+
+instance showPlaintext :: Show Plaintext where
+  show (Plaintext p) = p
+
+newtype Ciphertext
+  = Ciphertext String
+
+instance ntCiphertext :: Newtype Ciphertext String
+derive newtype instance eqCiphertext :: Eq Ciphertext
+
+instance showCiphertext :: Show Ciphertext where
+  show (Ciphertext c) = c
+
+newtype AuthTag
+  = AuthTag Buffer
+
+instance ntAuthTag :: Newtype AuthTag Buffer
+
+newtype InitializationVector
+  = InitializationVector String
+
+instance ntInitializationVector :: Newtype InitializationVector String
+
+instance showAlgorithm :: Show Algorithm where
+  show AES128 = "aes128"
+  show AES192 = "aes192"
+  show AES256 = "aes256"
+  show AES256CBC = "aes-256-cbc"
+  show (WithAuth algo) = show algo
+  
+instance showAuthAlgorithm :: Show AuthAlgorithm where
+  show AES256GCM = "aes-256-gcm"
+  
+
+{-- Further algorithms
 AES-128-CBC
 AES-128-CBC-HMAC-SHA1
 AES-128-CFB
@@ -222,48 +274,3 @@ RC4
 RC4-40
 RC4-HMAC-MD5
 -}
-newtype Password
-  = Password String
-
-instance ntPassword :: Newtype Password String
-
-newtype Key
-  = Key String
-
-instance ntKey :: Newtype Key String
-
-newtype Plaintext
-  = Plaintext String
-
-instance ntPlaintext :: Newtype Plaintext String
-
-instance showPlaintext :: Show Plaintext where
-  show (Plaintext p) = p
-
-newtype Ciphertext
-  = Ciphertext String
-
-instance ntCiphertext :: Newtype Ciphertext String
-
-instance showCiphertext :: Show Ciphertext where
-  show (Ciphertext c) = c
-
-newtype AuthTag
-  = Tag Buffer
-
-instance ntAuthTag :: Newtype AuthTag Buffer
-
-newtype InitializationVector
-  = InitializationVector String
-
-instance ntInitializationVector :: Newtype InitializationVector String
-
-instance showAlgorithm :: Show Algorithm where
-  show AES128 = "aes128"
-  show AES192 = "aes192"
-  show AES256 = "aes256"
-  show AES256CBC = "aes-256-cbc"
-  show (WithIv algo) = show algo
-
-instance showIvAlgorithm :: Show IvAlgorithm where
-  show AES256GCM = "aes-256-gcm"

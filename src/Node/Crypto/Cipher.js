@@ -6,7 +6,7 @@ exports._createCipher = (algorithm, password) => () => crypto.createCipher(algor
 
 exports._createCipherIv = (algorithm, password, iv) => () => crypto.createCipheriv(algorithm, password, iv)
 
-exports.getAuthTag = (cipher) => () => cipher.getAuthTag()
+exports._getAuthTag = (cipher) => () => cipher.getAuthTag()
 
 exports._update = (cipher, buffer) => () => cipher.update(buffer)
 

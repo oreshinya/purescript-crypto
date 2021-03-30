@@ -3,9 +3,6 @@ module Node.Crypto.Cipher
   , hex
   , base64
   , createCipher
-  , toIv
-  , hexIv
-  , base64Iv
   , createCipherIv
   , getAuthTag
   , update
@@ -13,103 +10,81 @@ module Node.Crypto.Cipher
   ) where
 
 import Prelude
+
 import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (un)
+import Data.Nullable (Nullable, toNullable)
+import Data.Traversable (sequence)
 import Effect (Effect)
 import Node.Buffer (Buffer, fromString, toString, concat)
-import Node.Crypto.Types (Algorithm(..), IvAlgorithm(..), AuthTag, InitializationVector(..), Password(..), Key(..), Plaintext(..), Ciphertext(..))
+import Node.Crypto.Types (Algorithm(..), AuthTag(..), Ciphertext(..), InitializationVector(..), Key(..), Password(..), Plaintext(..))
 import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Crypto.Types as Types
+import Prim.TypeError (class Warn, Text)
 
 foreign import data Cipher :: Type
 
-type IvCipherResult
+type CipherResult
   = { ciphertext :: Ciphertext
-    , authTag :: AuthTag
+    , authTag :: Maybe AuthTag
     }
 
+-- | Encrypt a UTF-8 encoded ciphertext
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: hex encoded `Ciphertext` and optional Node.Buffer `AuthTag`
 hex ::
   Algorithm ->
-  Password ->
-  String ->
-  Effect String
-hex alg password value = cipher alg password value Hex
+  Key ->
+  Maybe InitializationVector ->
+  Plaintext ->
+  Effect CipherResult
+hex alg password iv value = cipherIv alg password iv value Hex
 
+-- | Encrypt a UTF-8 encoded ciphertext
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: base64 encoded `Ciphertext` and optional Node.Buffer `AuthTag`
 base64 ::
   Algorithm ->
-  Password ->
-  String ->
-  Effect String
-base64 alg password value = cipher alg password value Base64
-
-hexIv ::
-  IvAlgorithm ->
   Key ->
-  InitializationVector ->
+  Maybe InitializationVector ->
   Plaintext ->
-  Effect IvCipherResult
-hexIv alg password iv value = toIv alg password iv value Hex
-
-base64Iv ::
-  IvAlgorithm ->
-  Key ->
-  InitializationVector ->
-  Plaintext ->
-  Effect IvCipherResult
-base64Iv alg password iv value = toIv alg password iv value Base64
-
-toIv ::
-  IvAlgorithm ->
-  Key ->
-  InitializationVector ->
-  Plaintext ->
-  Encoding ->
-  Effect IvCipherResult
-toIv ivAlgo password iv value enc = cipherIv ivAlgo password iv value enc
-
-cipher ::
-  Algorithm ->
-  Password ->
-  String ->
-  Encoding ->
-  Effect String
-cipher alg password value enc = do
-  buf <- fromString value UTF8
-  cip <- createCipher alg password
-  rbuf1 <- update cip buf
-  rbuf2 <- final cip
-  rbuf <- concat [ rbuf1, rbuf2 ]
-  toString enc rbuf
+  Effect CipherResult
+base64 alg password iv value = cipherIv alg password iv value Base64
 
 cipherIv ::
-  IvAlgorithm ->
+  Algorithm ->
   Key ->
-  InitializationVector ->
+  Maybe InitializationVector ->
   Plaintext ->
   Encoding ->
-  Effect IvCipherResult
+  Effect CipherResult
 cipherIv alg key iv (Plaintext value) enc = do
   buf <- fromString value UTF8
   cip <- createCipherIv alg key iv
   rbuf1 <- update cip buf
   rbuf2 <- final cip
   rbuf <- concat [ rbuf1, rbuf2 ]
-  tag <- getAuthTag cip
+  tag <- sequence $ case alg of 
+    WithAuth _ -> Just $ getAuthTag cip
+    _ -> Nothing
   res <- toString enc rbuf
   pure $ { authTag: tag, ciphertext: (Ciphertext res) }
 
-createCipher :: Algorithm -> Password -> Effect Cipher
-createCipher alg (Password password) = runFn2 _createCipher (show alg) password
-
-foreign import _createCipher ::
-  Fn2 String String (Effect Cipher)
-
-createCipherIv :: IvAlgorithm -> Key -> InitializationVector -> Effect Cipher
-createCipherIv alg (Key key) (InitializationVector iv) = runFn3 _createCipherIv (show alg) key iv
+-- | Provides a Cipher
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: base64 encoded `Ciphertext` and optional Node.Buffer `AuthTag`
+createCipherIv :: Algorithm -> Key -> Maybe InitializationVector -> Effect Cipher
+createCipherIv alg (Key key) maybeIV = runFn3 _createCipherIv (show alg) key iv 
+  where
+    iv = maybeIV <#> (un InitializationVector) # toNullable
 
 foreign import _createCipherIv ::
-  Fn3 String String String (Effect Cipher)
+  Fn3 String String (Nullable String) (Effect Cipher)
 
-foreign import getAuthTag :: Cipher -> Effect AuthTag
+foreign import _getAuthTag :: Cipher -> Effect Buffer
+
+getAuthTag :: Cipher -> Effect AuthTag
+getAuthTag c = _getAuthTag c <#> AuthTag
 
 foreign import _update :: Fn2 Cipher Buffer (Effect Buffer)
 
@@ -117,3 +92,9 @@ update :: Cipher -> Buffer -> (Effect Buffer)
 update ciph buffer = runFn2 _update ciph buffer
 
 foreign import final :: Cipher -> Effect Buffer
+
+createCipher :: Warn (Text "This method is deprecated and will be removed in the future. Please use cipherIv.") => Algorithm -> Password -> Effect Cipher
+createCipher alg (Password password) = runFn2 _createCipher (show alg) password
+
+foreign import _createCipher ::
+  Fn2 String String (Effect Cipher)
