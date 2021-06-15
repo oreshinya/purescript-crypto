@@ -1,69 +1,100 @@
 module Node.Crypto.Cipher
   ( Cipher
-  , Algorithm(..)
-  , Password
   , hex
   , base64
   , createCipher
+  , createCipherIv
+  , getAuthTag
   , update
   , final
   ) where
 
 import Prelude
+
+import Data.Function.Uncurried (Fn2, Fn3, runFn2, runFn3)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (un)
+import Data.Nullable (Nullable, toNullable)
+import Data.Traversable (sequence)
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
 import Node.Buffer (Buffer, fromString, toString, concat)
+import Node.Crypto.Types (Algorithm(..), AuthTag(..), Ciphertext(..), InitializationVector(..), Key(..), Password(..), Plaintext(..))
+import Node.Encoding (Encoding(UTF8, Hex, Base64))
+import Prim.TypeError (class Warn, Text)
 
 foreign import data Cipher :: Type
 
-data Algorithm
-  = AES128
-  | AES192
-  | AES256
+type CipherResult
+  = { ciphertext :: Ciphertext
+    , authTag :: Maybe AuthTag
+    }
 
-type Password = String
+-- | Encrypt a UTF-8 encoded ciphertext
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: hex encoded `Ciphertext` and optional Node.Buffer `AuthTag`
+hex ::
+  Algorithm ->
+  Key ->
+  Maybe InitializationVector ->
+  Plaintext ->
+  Effect CipherResult
+hex alg password iv value = cipherIv alg password iv value Hex
 
-instance showAlgorithm :: Show Algorithm where
-  show AES128 = "aes128"
-  show AES192 = "aes192"
-  show AES256 = "aes256"
+-- | Encrypt a UTF-8 encoded ciphertext
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: base64 encoded `Ciphertext` and optional Node.Buffer `AuthTag`
+base64 ::
+  Algorithm ->
+  Key ->
+  Maybe InitializationVector ->
+  Plaintext ->
+  Effect CipherResult
+base64 alg password iv value = cipherIv alg password iv value Base64
 
-hex
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-hex alg password str = cipher alg password str Hex
-
-base64
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-base64 alg password str = cipher alg password str Base64
-
-cipher
-  :: Algorithm
-  -> Password
-  -> String
-  -> Encoding
-  -> Effect String
-cipher alg password str enc = do
-  buf <- fromString str UTF8
-  cip <- createCipher alg password
+cipherIv ::
+  Algorithm ->
+  Key ->
+  Maybe InitializationVector ->
+  Plaintext ->
+  Encoding ->
+  Effect CipherResult
+cipherIv alg key iv (Plaintext value) enc = do
+  buf <- fromString value UTF8
+  cip <- createCipherIv alg key iv
   rbuf1 <- update cip buf
   rbuf2 <- final cip
   rbuf <- concat [ rbuf1, rbuf2 ]
-  toString enc rbuf
+  tag <- sequence $ case alg of 
+    WithAuth _ -> Just $ getAuthTag cip
+    _ -> Nothing
+  res <- toString enc rbuf
+  pure $ { authTag: tag, ciphertext: (Ciphertext res) }
 
-createCipher :: Algorithm -> Password -> Effect Cipher
-createCipher alg password = _createCipher (show alg) password
+-- | Provides a Cipher
+-- | Make sure that the key and the initialization vector is a UTF-8 encoded string
+-- | Output: base64 encoded `Ciphertext` and optional Node.Buffer `AuthTag`
+createCipherIv :: Algorithm -> Key -> Maybe InitializationVector -> Effect Cipher
+createCipherIv alg (Key key) maybeIV = runFn3 _createCipherIv (show alg) key iv 
+  where
+    iv = maybeIV <#> (un InitializationVector) # toNullable
 
-foreign import _createCipher
-  :: String
-  -> String
-  -> Effect Cipher
+foreign import _createCipherIv ::
+  Fn3 String String (Nullable String) (Effect Cipher)
 
-foreign import update :: Cipher -> Buffer -> Effect Buffer
+foreign import _getAuthTag :: Cipher -> Effect Buffer
+
+getAuthTag :: Cipher -> Effect AuthTag
+getAuthTag c = _getAuthTag c <#> AuthTag
+
+foreign import _update :: Fn2 Cipher Buffer (Effect Buffer)
+
+update :: Cipher -> Buffer -> (Effect Buffer)
+update ciph buffer = runFn2 _update ciph buffer
 
 foreign import final :: Cipher -> Effect Buffer
+
+createCipher :: Warn (Text "This method is deprecated and will be removed in the future. Please use cipherIv.") => Algorithm -> Password -> Effect Cipher
+createCipher alg (Password password) = runFn2 _createCipher (show alg) password
+
+foreign import _createCipher ::
+  Fn2 String String (Effect Cipher)

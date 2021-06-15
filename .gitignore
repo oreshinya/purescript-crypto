@@ -6,3 +6,11 @@
 /.psc*
 /.purs*
 /.psa*
+
+
+# Dependencies
+.psci_modules
+
+# Generated files
+.psci
+.spago/
