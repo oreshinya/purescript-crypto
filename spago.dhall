@@ -2,7 +2,6 @@
 , dependencies =
   [ "assert"
   , "console"
-  , "debug"
   , "effect"
   , "foldable-traversable"
   , "functions"
