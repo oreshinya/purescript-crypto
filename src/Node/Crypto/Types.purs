@@ -16,9 +16,7 @@ module Node.Crypto.Types
 -- createCipher authTagLength needed for CCM or OCB, but is not added, yet
 
 import Data.Show (class Show, show)
-import Data.Newtype (class Newtype)
 import Node.Buffer (Buffer)
-import Data.Eq (class Eq)
 
 data AuthAlgorithm
   = AES256GCM
@@ -30,44 +28,22 @@ data Algorithm
   | AES256CBC
   | WithAuth AuthAlgorithm
 
-newtype Password
-  = Password String
+type Password = String
 
-instance ntPassword :: Newtype Password String
+type Key = String
 
-newtype Key
-  = Key String
+type Plaintext = String
 
-instance ntKey :: Newtype Key String
+type Ciphertext = String
 
-newtype Plaintext
-  = Plaintext String
+type AuthTag = Buffer
 
-instance ntPlaintext :: Newtype Plaintext String
-derive newtype instance eqPlaintext :: Eq Plaintext
+data InitializationVector
+  = IvString String
 
-instance showPlaintext :: Show Plaintext where
-  show (Plaintext p) = p
-
-newtype Ciphertext
-  = Ciphertext String
-
-instance ntCiphertext :: Newtype Ciphertext String
-derive newtype instance eqCiphertext :: Eq Ciphertext
-
-instance showCiphertext :: Show Ciphertext where
-  show (Ciphertext c) = c
-
-newtype AuthTag
-  = AuthTag Buffer
-
-instance ntAuthTag :: Newtype AuthTag Buffer
-
-newtype InitializationVector
-  = InitializationVector String
-
-instance ntInitializationVector :: Newtype InitializationVector String
-
+instance showInitializationVector :: Show InitializationVector where
+  show (IvString iv) = iv
+  
 instance showAlgorithm :: Show Algorithm where
   show AES128 = "aes128"
   show AES192 = "aes192"
