@@ -2,24 +2,12 @@
 
 var crypto = require('crypto');
 
-exports._createCipher = function(algorithm) {
-  return function(password) {
-    return function() {
-      return crypto.createCipher(algorithm, password);
-    }
-  }
+exports.createCipherivImpl = crypto.createCipheriv;
+
+exports.updateImpl = function(buffer, cipher) {
+  return cipher.update(buffer);
 }
 
-exports.update = function(cipher) {
-  return function(buffer) {
-    return function() {
-      return cipher.update(buffer);
-    }
-  }
-}
-
-exports.final = function(cipher) {
-  return function() {
-    return cipher.final();
-  }
+exports.finalImpl = function(cipher) {
+  return cipher.final();
 }

@@ -1,52 +1,35 @@
 module Node.Crypto.Hmac
   ( Hmac
-  , Secret
-  , hex
-  , base64
   , createHmac
   , update
   , digest
   ) where
 
-import Prelude
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, fromString, toString)
-import Node.Crypto.Hash (Algorithm)
+import Effect.Uncurried (EffectFn1, EffectFn2, runEffectFn1, runEffectFn2)
+import Node.Buffer (Buffer)
 
+-- | [https://nodejs.org/api/crypto.html#crypto_class_hmac](https://nodejs.org/api/crypto.html#crypto_class_hmac)
+-- |
+-- | Usage:
+-- |
+-- | ```
+-- | buf <- Buffer.fromString "dummy" UTF8
+-- | key <- Buffer.fromString "key" UTF8
+-- | Hmac.createHmac "sha512" key >>= Hmac.update buf >>= Hmac.digest >>= Buffer.toString Hex
+-- | ```
 foreign import data Hmac :: Type
 
-type Secret = String
+createHmac :: String -> Buffer -> Effect Hmac
+createHmac alg key =
+  runEffectFn2 createHmacImpl alg key
 
-hex
-  :: Algorithm
-  -> Secret
-  -> String
-  -> Effect String
-hex alg secret str = hmac alg secret str Hex
+update :: Buffer -> Hmac -> Effect Hmac
+update buf hmac = runEffectFn2 updateImpl buf hmac
 
-base64
-  :: Algorithm
-  -> Secret
-  -> String
-  -> Effect String
-base64 alg secret str = hmac alg secret str Base64
+digest :: Hmac -> Effect Buffer
+digest hmac = runEffectFn1 digestImpl hmac
 
-hmac
-  :: Algorithm
-  -> Secret
-  -> String
-  -> Encoding
-  -> Effect String
-hmac alg secret str enc = do
-  buf <- fromString str UTF8
-  createHmac alg secret >>= flip update buf >>= digest >>= toString enc
-
-createHmac :: Algorithm -> Secret -> Effect Hmac
-createHmac alg secret = _createHmac (show alg) secret
-
-foreign import _createHmac :: String -> String -> Effect Hmac
-
-foreign import update :: Hmac -> Buffer -> Effect Hmac
-
-foreign import digest :: Hmac -> Effect Buffer
+foreign import createHmacImpl :: EffectFn2 String Buffer Hmac
+foreign import updateImpl :: EffectFn2 Buffer Hmac Hmac
+foreign import digestImpl :: EffectFn1 Hmac Buffer

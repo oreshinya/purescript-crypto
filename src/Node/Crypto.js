@@ -2,16 +2,23 @@
 
 var crypto = require('crypto');
 
-exports.timingSafeEqual = function(b1) {
-  return function(b2) {
-    return function() {
-      return crypto.timingSafeEqual(b1, b2);
+exports.timingSafeEqualImpl = crypto.timingSafeEqual;
+
+exports.randomBytesImpl = crypto.randomBytes;
+
+exports.scryptImpl = function(password, salt, keylen) {
+  return function(onError, onSuccess) {
+    crypto.scrypt(password, salt, keylen, function(err, key) {
+      if (err) {
+        onError(err);
+      } else {
+        onSuccess(key);
+      }
+    });
+    return function(cancelError, onCancelerError, onCancelerSuccess) {
+      onCancelerSuccess({});
     }
   }
 }
 
-exports.randomBytes = function(size) {
-  return function() {
-    return crypto.randomBytes(size);
-  }
-}
+exports.scryptSyncImpl = crypto.scryptSync;

@@ -1,69 +1,43 @@
 module Node.Crypto.Cipher
   ( Cipher
-  , Algorithm(..)
-  , Password
-  , hex
-  , base64
-  , createCipher
+  , createCipheriv
   , update
   , final
   ) where
 
-import Prelude
+import Data.Maybe (Maybe)
+import Data.Nullable (Nullable, toNullable)
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, fromString, toString, concat)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, runEffectFn1, runEffectFn2, runEffectFn3)
+import Node.Buffer (Buffer)
 
+-- | [https://nodejs.org/api/crypto.html#crypto_class_cipher](https://nodejs.org/api/crypto.html#crypto_class_cipher)
+-- |
+-- | Usage:
+-- |
+-- | ```
+-- | buf <- Buffer.fromString "dummy" UTF8
+-- | pbuf <- Buffer.fromString "password" UTF8
+-- | sbuf <- Buffer.fromString "salt" UTF8
+-- | key <- Crypto.scryptSync pbuf sbuf 32
+-- | iv <- Buffer.fromString "iviviviviviviviv" UTF8
+-- | cip <- Cipher.createCipheriv "aes256" key (Just iv)
+-- | rbuf1 <- Cipher.update buf cip
+-- | rbuf2 <- Cipher.final cip
+-- | Buffer.concat [ rbuf1, rbuf2 ] >>= Buffer.toString Hex
+-- | ```
 foreign import data Cipher :: Type
 
-data Algorithm
-  = AES128
-  | AES192
-  | AES256
+createCipheriv :: String -> Buffer -> Maybe Buffer -> Effect Cipher
+createCipheriv alg key iv =
+  runEffectFn3 createCipherivImpl alg key (toNullable iv)
 
-type Password = String
+update :: Buffer -> Cipher -> Effect Buffer
+update buf cipher = runEffectFn2 updateImpl buf cipher
 
-instance showAlgorithm :: Show Algorithm where
-  show AES128 = "aes128"
-  show AES192 = "aes192"
-  show AES256 = "aes256"
+final :: Cipher -> Effect Buffer
+final cipher = runEffectFn1 finalImpl cipher
 
-hex
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-hex alg password str = cipher alg password str Hex
-
-base64
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-base64 alg password str = cipher alg password str Base64
-
-cipher
-  :: Algorithm
-  -> Password
-  -> String
-  -> Encoding
-  -> Effect String
-cipher alg password str enc = do
-  buf <- fromString str UTF8
-  cip <- createCipher alg password
-  rbuf1 <- update cip buf
-  rbuf2 <- final cip
-  rbuf <- concat [ rbuf1, rbuf2 ]
-  toString enc rbuf
-
-createCipher :: Algorithm -> Password -> Effect Cipher
-createCipher alg password = _createCipher (show alg) password
-
-foreign import _createCipher
-  :: String
-  -> String
-  -> Effect Cipher
-
-foreign import update :: Cipher -> Buffer -> Effect Buffer
-
-foreign import final :: Cipher -> Effect Buffer
+foreign import createCipherivImpl :: EffectFn3 String Buffer (Nullable Buffer) Cipher
+foreign import updateImpl :: EffectFn2 Buffer Cipher Buffer
+foreign import finalImpl :: EffectFn1 Cipher Buffer

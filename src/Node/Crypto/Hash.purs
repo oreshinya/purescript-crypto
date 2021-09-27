@@ -1,58 +1,33 @@
 module Node.Crypto.Hash
   ( Hash
-  , Algorithm(..)
-  , hex
-  , base64
   , createHash
   , update
   , digest
   ) where
 
-import Prelude
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, fromString, toString)
+import Effect.Uncurried (EffectFn1, EffectFn2, runEffectFn1, runEffectFn2)
+import Node.Buffer (Buffer)
 
+-- | [https://nodejs.org/api/crypto.html#crypto_class_hash](https://nodejs.org/api/crypto.html#crypto_class_hash)
+-- |
+-- | Usage:
+-- |
+-- | ```
+-- | buf <- Buffer.fromString "dummy" UTF8
+-- | Hash.createHash "sha512" >>= Hash.update buf >>= Hash.digest >>= Buffer.toString Hex
+-- | ```
 foreign import data Hash :: Type
 
-data Algorithm
-  = MD5
-  | SHA256
-  | SHA512
-  | SHA1
+createHash :: String -> Effect Hash
+createHash alg = runEffectFn1 createHashImpl alg
 
-instance showAlgorithm :: Show Algorithm where
-  show MD5 = "md5"
-  show SHA256 = "sha256"
-  show SHA512 = "sha512"
-  show SHA1 = "sha1"
+update :: Buffer -> Hash -> Effect Hash
+update buf hash = runEffectFn2 updateImpl buf hash
 
-hex
-  :: Algorithm
-  -> String
-  -> Effect String
-hex alg str = hash alg str Hex
+digest :: Hash -> Effect Buffer
+digest hash = runEffectFn1 digestImpl hash
 
-base64
-  :: Algorithm
-  -> String
-  -> Effect String
-base64 alg str = hash alg str Base64
-
-hash
-  :: Algorithm
-  -> String
-  -> Encoding
-  -> Effect String
-hash alg str enc = do
-  buf <- fromString str UTF8
-  createHash alg >>= flip update buf >>= digest >>= toString enc
-
-createHash :: Algorithm -> Effect Hash
-createHash alg = _createHash $ show alg
-
-foreign import _createHash :: String -> Effect Hash
-
-foreign import update :: Hash -> Buffer -> Effect Hash
-
-foreign import digest :: Hash -> Effect Buffer
+foreign import createHashImpl :: EffectFn1 String Hash
+foreign import updateImpl :: EffectFn2 Buffer Hash Hash
+foreign import digestImpl :: EffectFn1 Hash Buffer

@@ -2,24 +2,12 @@
 
 var crypto = require('crypto');
 
-exports._createDecipher = function(algorithm) {
-  return function(password) {
-    return function() {
-      return crypto.createDecipher(algorithm, password);
-    }
-  }
+exports.createDecipherivImpl = crypto.createDecipheriv;
+
+exports.updateImpl = function(buffer, decipher) {
+  return decipher.update(buffer);
 }
 
-exports.update = function(decipher) {
-  return function(buffer) {
-    return function() {
-      return decipher.update(buffer);
-    }
-  }
-}
-
-exports.final = function(decipher) {
-  return function() {
-    return decipher.final();
-  }
+exports.finalImpl = function(decipher) {
+  return decipher.final();
 }

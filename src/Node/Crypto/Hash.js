@@ -2,22 +2,12 @@
 
 var crypto = require('crypto');
 
-exports._createHash = function(algorithm) {
-  return function() {
-    return crypto.createHash(algorithm);
-  }
+exports.createHashImpl = crypto.createHash;
+
+exports.updateImpl = function(buffer, hash) {
+  return hash.update(buffer);
 }
 
-exports.update = function(hash) {
-  return function(buffer) {
-    return function() {
-      return hash.update(buffer);
-    }
-  }
-}
-
-exports.digest = function(hash) {
-  return function() {
-    return hash.digest();
-  }
+exports.digestImpl = function(hash) {
+  return hash.digest();
 }

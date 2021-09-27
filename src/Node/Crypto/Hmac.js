@@ -2,24 +2,12 @@
 
 var crypto = require('crypto');
 
-exports._createHmac = function(algorithm) {
-  return function(secret) {
-    return function() {
-      return crypto.createHmac(algorithm, secret);
-    }
-  }
+exports.createHmacImpl = crypto.createHmac;
+
+exports.updateImpl = function(buffer, hmac) {
+  return hmac.update(buffer);
 }
 
-exports.update = function(hmac) {
-  return function(buffer) {
-    return function() {
-      return hmac.update(buffer);
-    }
-  }
-}
-
-exports.digest = function(hmac) {
-  return function() {
-    return hmac.digest();
-  }
+exports.digestImpl = function(hmac) {
+  return hmac.digest();
 }

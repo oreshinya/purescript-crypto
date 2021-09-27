@@ -2,39 +2,57 @@ module Test.Main where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Node.Crypto as Crypto
+import Effect.Class (liftEffect)
+import Node.Buffer as Buffer
+import Node.Crypto (scrypt, scryptSync)
 import Node.Crypto.Cipher as Cipher
 import Node.Crypto.Decipher as Decipher
 import Node.Crypto.Hash as Hash
 import Node.Crypto.Hmac as Hmac
-import Test.Assert (assert)
+import Node.Encoding (Encoding(..))
+import Test.Unit (test)
+import Test.Unit.Assert as Assert
+import Test.Unit.Main (runTest)
 
 main :: Effect Unit
-main = do
-  hexHash <- Hash.hex Hash.SHA512 password
-  hexHmac <- Hmac.hex Hash.SHA512 secret password
-  hexCipher <- Cipher.hex Cipher.AES256 password identifier
-  fromHexDecipher <- Decipher.fromHex Cipher.AES256 password hexCipher
-  base64Hash <- Hash.base64 Hash.SHA512 password
-  base64Hmac <- Hmac.base64 Hash.SHA512 secret password
-  base64Cipher <- Cipher.base64 Cipher.AES256 password identifier
-  fromBase64Decipher <- Decipher.fromBase64 Cipher.AES256 password base64Cipher
-  assert $ hexHash == "fd369c76561c41e90eaacef9e95dde1b92a402980b75d739da368ad427e2a5a01bc79e5a6fb46df001b8e21c94e702bfb47574271e4098150854e112bb9c9d1d"
-  assert $ hexHmac == "64ca657263492b718984ab0a4a5a2a43288c35d9e15c6797f2597ce8e8440e862c5495cf852f4044e6caa9fe58bf0972153fcb827a5581d06e72b404126dbf05"
-  assert $ hexCipher == "fa27b1b589a3c39576c9cecfe5071682815da543fbce75c4823a6be70f0e1777"
-  assert $ fromHexDecipher == identifier
-  assert $ base64Hash == "/TacdlYcQekOqs756V3eG5KkApgLddc52jaK1CfipaAbx55ab7Rt8AG44hyU5wK/tHV0Jx5AmBUIVOESu5ydHQ=="
-  assert $ base64Hmac == "ZMplcmNJK3GJhKsKSloqQyiMNdnhXGeX8ll86OhEDoYsVJXPhS9ARObKqf5YvwlyFT/LgnpVgdBucrQEEm2/BQ=="
-  assert $ base64Cipher == "+iextYmjw5V2yc7P5QcWgoFdpUP7znXEgjpr5w8OF3c="
-  assert $ fromBase64Decipher == identifier
-  assert =<< Crypto.timingSafeEqualString "127e6fbfe24a750e72930c" "127e6fbfe24a750e72930c"
+main = runTest do
+  test "hash" do
+    result <- liftEffect do
+      buf <- Buffer.fromString "dummy" UTF8
+      Hash.createHash "sha512" >>= Hash.update buf >>= Hash.digest >>= Buffer.toString Hex
+    Assert.equal "1692526aab84461a8aebcefddcba2b33fb5897ab180c53e8b345ae125484d0aaa35baf60487050be21ed8909a48eace93851bf139087ce1f7a87d97b6120a651" result
 
-identifier :: String
-identifier = "sample_identifier"
+  test "hmac" do
+    result <- liftEffect do
+      buf <- Buffer.fromString "dummy" UTF8
+      key <- Buffer.fromString "key" UTF8
+      Hmac.createHmac "sha512" key >>= Hmac.update buf >>= Hmac.digest >>= Buffer.toString Hex
+    Assert.equal "6462a852889cebcd98c27bc81d69fd46b2f7ea83fc4210f4eab29f8d4a4cc0a385ce2ecf280def0680f36bb668c866120964444eea0d377f0459ecb91fea52ad" result
 
-password :: String
-password = "sample_password"
+  test "cipher" do
+    result <- liftEffect do
+      buf <- Buffer.fromString "dummy" UTF8
+      pbuf <- Buffer.fromString "password" UTF8
+      sbuf <- Buffer.fromString "salt" UTF8
+      key <- scryptSync pbuf sbuf 32
+      iv <- Buffer.fromString "iviviviviviviviv" UTF8
+      cip <- Cipher.createCipheriv "aes256" key (Just iv)
+      rbuf1 <- Cipher.update buf cip
+      rbuf2 <- Cipher.final cip
+      Buffer.concat [ rbuf1, rbuf2 ] >>= Buffer.toString Hex
+    Assert.equal "434cf3b56614fc8eb186ea866fbd33b4" result
 
-secret :: String
-secret = "sample_secret"
+  test "decipher" do
+    result <- do
+      buf <- liftEffect $ Buffer.fromString "434cf3b56614fc8eb186ea866fbd33b4" Hex
+      pbuf <- liftEffect $ Buffer.fromString "password" UTF8
+      sbuf <- liftEffect $ Buffer.fromString "salt" UTF8
+      key <- scrypt pbuf sbuf 32
+      iv <- liftEffect $ Buffer.fromString "iviviviviviviviv" UTF8
+      dec <- liftEffect $ Decipher.createDecipheriv "aes256" key (Just iv)
+      rbuf1 <- liftEffect $ Decipher.update buf dec
+      rbuf2 <- liftEffect $ Decipher.final dec
+      liftEffect $ Buffer.concat [ rbuf1, rbuf2 ] >>= Buffer.toString UTF8
+    Assert.equal "dummy" result

@@ -1,22 +1,38 @@
-module Node.Crypto where
+module Node.Crypto
+  ( timingSafeEqual
+  , randomBytes
+  , scrypt
+  , scryptSync
+  ) where
 
 import Prelude
 
+import Data.Function.Uncurried (Fn3, runFn3)
 import Effect (Effect)
-import Node.Buffer (Buffer, fromString, toString)
-import Node.Crypto.Hash (Algorithm(..))
-import Node.Crypto.Hmac (createHmac, digest, update)
-import Node.Encoding (Encoding(..))
+import Effect.Aff (Aff)
+import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, runEffectFn1, runEffectFn2, runEffectFn3)
+import Node.Buffer (Buffer)
 
-timingSafeEqualString :: String -> String -> Effect Boolean
-timingSafeEqualString x1 x2 = do
-  a1 <- fromString x1 UTF8
-  a2 <- fromString x2 UTF8
-  secret <- randomBytes 32 >>= toString UTF8
-  b1 <- createHmac SHA256 secret >>= flip update a1 >>= digest
-  b2 <- createHmac SHA256 secret >>= flip update a2 >>= digest
-  conj (x1 == x2) <$> timingSafeEqual b1 b2
+-- | [https://nodejs.org/api/crypto.html#crypto_crypto_timingsafeequal_a_b](https://nodejs.org/api/crypto.html#crypto_crypto_timingsafeequal_a_b)
+timingSafeEqual :: Buffer -> Buffer -> Effect Boolean
+timingSafeEqual a b = runEffectFn2 timingSafeEqualImpl a b
 
-foreign import timingSafeEqual :: Buffer -> Buffer -> Effect Boolean
+-- | [https://nodejs.org/api/crypto.html#crypto_crypto_randombytes_size_callback](https://nodejs.org/api/crypto.html#crypto_crypto_randombytes_size_callback)
+randomBytes :: Int -> Effect Buffer
+randomBytes size = runEffectFn1 randomBytesImpl size
 
-foreign import randomBytes :: Int -> Effect Buffer
+-- | [https://nodejs.org/api/crypto.html#crypto_crypto_scrypt_password_salt_keylen_options_callback](https://nodejs.org/api/crypto.html#crypto_crypto_scrypt_password_salt_keylen_options_callback)
+scrypt :: Buffer -> Buffer -> Int -> Aff Buffer
+scrypt password salt keylen =
+  fromEffectFnAff $ runFn3 scryptImpl password salt keylen
+
+-- | [https://nodejs.org/api/crypto.html#crypto_crypto_scryptsync_password_salt_keylen_options](https://nodejs.org/api/crypto.html#crypto_crypto_scryptsync_password_salt_keylen_options)
+scryptSync :: Buffer -> Buffer -> Int -> Effect Buffer
+scryptSync password salt keylen =
+  runEffectFn3 scryptSyncImpl password salt keylen
+
+foreign import timingSafeEqualImpl :: EffectFn2 Buffer Buffer Boolean
+foreign import randomBytesImpl :: EffectFn1 Int Buffer
+foreign import scryptImpl :: Fn3 Buffer Buffer Int (EffectFnAff Buffer)
+foreign import scryptSyncImpl :: EffectFn3 Buffer Buffer Int Buffer

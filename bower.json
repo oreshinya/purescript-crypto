@@ -25,9 +25,11 @@
     "output"
   ],
   "dependencies": {
-    "purescript-node-buffer": "^7.0.0"
+    "purescript-node-buffer": "^7.0.0",
+    "purescript-nullable": "^5.0.0",
+    "purescript-aff": "^6.0.0"
   },
   "devDependencies": {
-    "purescript-assert": "^5.0.0"
+    "purescript-test-unit": "^16.0.0"
   }
 }

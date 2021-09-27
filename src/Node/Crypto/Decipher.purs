@@ -1,56 +1,43 @@
 module Node.Crypto.Decipher
   ( Decipher
-  , fromHex
-  , fromBase64
-  , createDecipher
+  , createDecipheriv
   , update
   , final
   ) where
 
-import Prelude
+import Data.Maybe (Maybe)
+import Data.Nullable (Nullable, toNullable)
 import Effect (Effect)
-import Node.Encoding (Encoding(UTF8, Hex, Base64))
-import Node.Buffer (Buffer, fromString, toString, concat)
-import Node.Crypto.Cipher (Algorithm, Password)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, runEffectFn1, runEffectFn2, runEffectFn3)
+import Node.Buffer (Buffer)
 
+-- | [https://nodejs.org/api/crypto.html#crypto_class_decipher](https://nodejs.org/api/crypto.html#crypto_class_decipher)
+-- |
+-- | Usage:
+-- |
+-- | ```
+-- | buf <- Buffer.fromString "434cf3b56614fc8eb186ea866fbd33b4" Hex
+-- | pbuf <- Buffer.fromString "password" UTF8
+-- | sbuf <- Buffer.fromString "salt" UTF8
+-- | key <- Crypto.scryptSync pbuf sbuf 32
+-- | iv <- Buffer.fromString "iviviviviviviviv" UTF8
+-- | dec <- Decipher.createDecipheriv "aes256" key (Just iv)
+-- | rbuf1 <- Decipher.update buf dec
+-- | rbuf2 <- Decipher.final dec
+-- | Buffer.concat [ rbuf1, rbuf2 ] >>= Buffer.toString UTF8
+-- | ```
 foreign import data Decipher :: Type
 
-fromHex
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-fromHex alg password str = decipher alg password str Hex
+createDecipheriv :: String -> Buffer -> Maybe Buffer -> Effect Decipher
+createDecipheriv alg key iv =
+  runEffectFn3 createDecipherivImpl alg key (toNullable iv)
 
-fromBase64
-  :: Algorithm
-  -> Password
-  -> String
-  -> Effect String
-fromBase64 alg password str = decipher alg password str Base64
+update :: Buffer -> Decipher -> Effect Buffer
+update buf decipher = runEffectFn2 updateImpl buf decipher
 
-decipher
-  :: Algorithm
-  -> Password
-  -> String
-  -> Encoding
-  -> Effect String
-decipher alg password str enc = do
-  buf <- fromString str enc
-  dec <- createDecipher alg password
-  rbuf1 <- update dec buf
-  rbuf2 <- final dec
-  rbuf <- concat [ rbuf1, rbuf2 ]
-  toString UTF8 rbuf
+final :: Decipher -> Effect Buffer
+final decipher = runEffectFn1 finalImpl decipher
 
-createDecipher :: Algorithm -> Password -> Effect Decipher
-createDecipher alg password = _createDecipher (show alg) password
-
-foreign import _createDecipher
-  :: String
-  -> String
-  -> Effect Decipher
-
-foreign import update :: Decipher -> Buffer -> Effect Buffer
-
-foreign import final :: Decipher -> Effect Buffer
+foreign import createDecipherivImpl :: EffectFn3 String Buffer (Nullable Buffer) Decipher
+foreign import updateImpl :: EffectFn2 Buffer Decipher Buffer
+foreign import finalImpl :: EffectFn1 Decipher Buffer
