@@ -1,13 +1,13 @@
 "use strict";
 
-var crypto = require('crypto');
+import crypto from "crypto";
 
-exports.createHmacImpl = crypto.createHmac;
+export const createHmacImpl = crypto.createHmac;
 
-exports.updateImpl = function(buffer, hmac) {
+export function updateImpl(buffer, hmac) {
   return hmac.update(buffer);
 }
 
-exports.digestImpl = function(hmac) {
+export function digestImpl(hmac) {
   return hmac.digest();
 }
